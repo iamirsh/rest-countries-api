@@ -3,10 +3,11 @@ import { IoSearch, IoChevronDown } from "react-icons/io5";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { Link } from "react-router-dom";
 
-
 const Home = () => {
   const [data, setData] = useState([]);
-  const [query, setQuery] = useState();
+  const [query, setQuery] = useState(""); // Initialize with an empty string
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10; // Set items per page
 
   useEffect(() => {
     const fetchData = async () => {
@@ -17,13 +18,44 @@ const Home = () => {
     fetchData();
   }, []);
 
-  const filterCountries = data.filter(
-    (data) =>
-      typeof data.name?.common === "string" &&
-      data.name.common.toLowerCase().includes("india")
+   // Filtered data based on search query
+  const filteredData = data.filter((country) =>
+    country.name.common.toLowerCase().includes(query)
   );
 
-  console.log(filterCountries);
+  // Calculate paginated data
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredData.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Total pages based on filtered data length
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
+  // Handle page change
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  // Helper to generate page numbers for compact pagination
+  const generatePageNumbers = () => {
+    const pages = [];
+    if (totalPages <= 5) {
+      // If total pages are 5 or less, show all pages
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Show first three, last page, and current neighbors
+      pages.push(1, 2, 3);
+      if (currentPage > 3 && currentPage < totalPages - 2) {
+        pages.push("...", currentPage, "...");
+      } else if (currentPage >= totalPages - 2) {
+        pages.push("...", totalPages - 2);
+      }
+      pages.push(totalPages);
+    }
+    return pages;
+  };
 
   return (
     <div className="px-10">
@@ -35,7 +67,10 @@ const Home = () => {
             type="text"
             className="outline-none bg-transparent"
             placeholder="Search for a country..."
-            onChange={(e) => setQuery(e.target.value.toLowerCase())}
+            onChange={(e) => {
+              setQuery(e.target.value.toLowerCase());
+              setCurrentPage(1); // Reset to first page on search
+            }}
           />
         </div>
         {/* Dropdown */}
@@ -109,38 +144,71 @@ const Home = () => {
       </div>
       {/* Cards */}
       <div className="grid gap-10 mt-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        {data
-          .filter(
-            (data) =>
-              typeof data.name?.common === "string" &&
-              data.name.common.toLowerCase().includes(query)
-          )
-          .map((data) => (
+        {currentItems.map((country) => (
             <Link
               className="rounded-lg drop-shadow-md bg-white cursor-pointer"
-              to={`/country?name=${data.name.common}`}
+              to={`/country?name=${country.name.common}`}
+              key={country.name.common}
             >
               <img
-                src={data.flags.png}
+                src={country.flags.png}
                 width={100}
                 height={100}
                 className="w-full rounded-t-lg"
-                alt="img"
+                alt={`${country.name.common} flag`}
               />
               <div className="p-2">
-                <h2 className="mb-2 font-bold text-lg">{data.name.common}</h2>
+                <h2 className="mb-2 font-bold text-lg">
+                  {country.name.common}
+                </h2>
                 <p className="text-sm">
-                  <b>Population:</b> {data.population}
+                  <b>Population:</b> {country.population}
                 </p>
                 <p className="text-sm">
-                  <b>Region:</b> {data.region}
+                  <b>Region:</b> {country.region}
                 </p>
                 <p className="text-sm">
-                  <b>Capital:</b> {data.capital?.[0]}
+                  <b>Capital:</b> {country.capital?.[0]}
                 </p>
               </div>
             </Link>
           ))}
+      </div>
+      {/* Pagination Controls */}
+      <div className="flex justify-center my-4 space-x-2">
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100"
+        >
+          Previous
+        </button>
+
+        {generatePageNumbers().map((page, index) =>
+          typeof page === "number" ? (
+            <button
+              key={index}
+              onClick={() => handlePageChange(page)}
+              className={`px-3 py-1 rounded ${
+                currentPage === page ? "bg-blue-500 text-white" : "bg-gray-200"
+              }`}
+            >
+              {page}
+            </button>
+          ) : (
+            <span key={index} className="px-3 py-1 text-gray-500">
+              {page}
+            </span>
+          )
+        )}
+
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100"
+        >
+          Next
+        </button>
       </div>
     </div>
   );
