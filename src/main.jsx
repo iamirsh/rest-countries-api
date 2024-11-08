@@ -23,7 +23,7 @@ const router = createBrowserRouter([
         element: <h1 className='text-3xl'>contact page</h1>
       },
       {
-        path:'/country',
+        path:'/:country',
         element: <CountryDetails />
       }
     ]
