@@ -7,8 +7,11 @@ const Navbar = () => {
       <a href="/">
         <h1 className="font-bold text-lg">Where in the world?</h1>
       </a>
-      <div className="toggle">
-        <div className="toggle-dark flex items-center">
+      <div className="toggle" >
+        <div className="toggle-dark flex items-center cursor-pointer" onClick={()=> {document.body.classList.toggle('dark')
+         
+          
+        }}>
           <IoMoon className="mr-2"/>
           <p>Dark Mode</p>
         </div>
